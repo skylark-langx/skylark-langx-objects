@@ -1,9 +1,8 @@
 define([
     "skylark-langx-ns/ns",
     "skylark-langx-ns/_attach",
-	"skylark-langx-types",
-    "skylark-langx-numbers"
-],function(skylark,_attach,types,numbers){
+	"skylark-langx-types"
+],function(skylark,_attach,types){
 	var hasOwnProperty = Object.prototype.hasOwnProperty,
         slice = Array.prototype.slice,
         isBoolean = types.isBoolean,
@@ -13,7 +12,7 @@ define([
 		isArray = types.isArray,
         isArrayLike = types.isArrayLike,
         isString = types.isString,
-        toInteger = numbers.toInteger;
+        toInteger = types.toInteger;
 
      // An internal function for creating assigner functions.
     function createAssigner(keysFunc, defaults) {
