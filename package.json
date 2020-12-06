@@ -20,6 +20,9 @@
   "author": "Hudaokeji Co.,Ltd",
   "license": "MIT",
   "bugs": "https://github.com/skylarklangx/skylark-langx/issues",
+  "exports": {
+    "./": "./dist/uncompressed/skylark-langx-objects/"
+  },
   "dependencies": {
     "skylark-langx-ns": "git+https://github.com/skylark-langx/skylark-langx-ns.git#master",
     "skylark-langx-types": "git+https://github.com/skylark-langx/skylark-langx-types.git#master"
