@@ -1,8 +1,7 @@
 define([
-    "skylark-langx-ns/ns",
-    "skylark-langx-ns/_attach",
+    "skylark-langx-ns",
 	"skylark-langx-types"
-],function(skylark,_attach,types){
+],function(skylark,types){
 	var hasOwnProperty = Object.prototype.hasOwnProperty,
         slice = Array.prototype.slice,
         isBoolean = types.isBoolean,
@@ -444,7 +443,7 @@ define([
     return skylark.attach("langx.objects",{
         allKeys: allKeys,
 
-        attach : _attach,
+        attach : skylark.attach,
 
         clone: clone,
 
