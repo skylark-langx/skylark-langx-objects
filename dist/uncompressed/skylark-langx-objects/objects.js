@@ -1,14 +1,14 @@
 define([
     "skylark-langx-ns",
-	"skylark-langx-types"
+    "skylark-langx-types"
 ],function(skylark,types){
-	var hasOwnProperty = Object.prototype.hasOwnProperty,
+    var hasOwnProperty = Object.prototype.hasOwnProperty,
         slice = Array.prototype.slice,
         isBoolean = types.isBoolean,
         isFunction = types.isFunction,
-		isObject = types.isObject,
-		isPlainObject = types.isPlainObject,
-		isArray = types.isArray,
+        isObject = types.isObject,
+        isPlainObject = types.isPlainObject,
+        isArray = types.isArray,
         isArrayLike = types.isArrayLike,
         isString = types.isString,
         toInteger = types.toInteger;
@@ -442,7 +442,7 @@ define([
 
     function scall(obj,method,arg1,arg2) {
         if (obj && obj[method]) {
-            var args = (2 in arguments) && slice.call(arguments, 2);
+            var args = slice.call(arguments, 2);
 
             return obj[method].apply(obj,args);
         }
