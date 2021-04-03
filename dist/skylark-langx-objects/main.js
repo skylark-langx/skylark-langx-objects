@@ -5,5 +5,5 @@
  * @link www.skylarkjs.org
  * @license MIT
  */
-define(["./objects"],function(e){return e});
+define(["./objects","./isEqual","./result"],function(e){return e});
 //# sourceMappingURL=sourcemaps/main.js.map

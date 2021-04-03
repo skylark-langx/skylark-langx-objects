@@ -1,5 +1,7 @@
 define([
-	"./objects"
+	"./objects",
+	"./isEqual",
+	"./result"
 ],function(objects){
 	return objects;
 });
