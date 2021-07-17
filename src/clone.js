@@ -1,6 +1,7 @@
- define([
-	"./objects"
-],function(objects) {
+define([
+    "skylark-langx-types",
+    "./objects"
+],function(types,objects) {
     var isPlainObject = types.isPlainObject,
         isArray = types.isArray;
 

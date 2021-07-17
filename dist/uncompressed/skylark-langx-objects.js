@@ -219,9 +219,10 @@ define('skylark-langx-objects/objects',[
 
 
 });
- define('skylark-langx-objects/clone',[
-	"./objects"
-],function(objects) {
+define('skylark-langx-objects/clone',[
+    "skylark-langx-types",
+    "./objects"
+],function(types,objects) {
     var isPlainObject = types.isPlainObject,
         isArray = types.isArray;
 
