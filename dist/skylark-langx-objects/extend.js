@@ -5,5 +5,5 @@
  * @link www.skylarkjs.org
  * @license MIT
  */
-define(["./objects","./mixin"],function(n,e){return n.extend=function(n){var t,i=slice.call(arguments,1);return"boolean"==typeof n&&(t=n,n=i.shift()),0==i.length&&(i=[n],n=this),i.forEach(function(i){e(n,i,t)}),n}});
+define(["./objects","./mixin"],function(n,t){var e=Array.prototype.slice;return n.extend=function(n){var o,r=e.call(arguments,1);return"boolean"==typeof n&&(o=n,n=r.shift()),0==r.length&&(r=[n],n=this),r.forEach(function(e){t(n,e,o)}),n}});
 //# sourceMappingURL=sourcemaps/extend.js.map

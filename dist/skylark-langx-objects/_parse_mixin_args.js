@@ -5,5 +5,5 @@
  * @link www.skylarkjs.org
  * @license MIT
  */
-define(["skylark-langx-types","./objects"],function(e,n){var t=e.isBoolean;return function(e){var n=slice.call(arguments,0),r=n.shift(),s=!1;return t(n[n.length-1])&&(s=n.pop()),{target:r,sources:n,deep:s}}});
+define(["skylark-langx-types","./objects"],function(e,r){var t=Array.prototype.slice,n=e.isBoolean;return function(e){var r=t.call(arguments,0),o=r.shift(),a=!1;return n(r[r.length-1])&&(a=r.pop()),{target:o,sources:r,deep:a}}});
 //# sourceMappingURL=sourcemaps/_parse_mixin_args.js.map

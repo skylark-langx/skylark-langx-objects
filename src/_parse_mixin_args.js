@@ -3,7 +3,8 @@ define([
     "./objects"
 ],function(types,objects) {
 
-    var isBoolean = types.isBoolean;
+    var slice = Array.prototype.slice,
+        isBoolean = types.isBoolean;
 
     function _parseMixinArgs(args) {
         var params = slice.call(arguments, 0),
