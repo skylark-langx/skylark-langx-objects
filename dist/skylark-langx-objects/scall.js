@@ -5,5 +5,5 @@
  * @link www.skylarkjs.org
  * @license MIT
  */
-define(["./objects"],function(n){return n.scall=function(n,c,e,l){if(n&&n[c]){var i=slice.call(arguments,2);return n[c].apply(n,i)}}});
+define(["./objects"],function(n){const r=Array.prototype.slice;return n.scall=function(n,t,c,e){if(n&&n[t]){var l=r.call(arguments,2);return n[t].apply(n,l)}}});
 //# sourceMappingURL=sourcemaps/scall.js.map
