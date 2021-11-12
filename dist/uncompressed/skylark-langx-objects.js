@@ -538,7 +538,7 @@ define('skylark-langx-objects/for-each',[
       return each(obj,fn,true);
     }
 
-	return arrays.forEach = forEach;
+	return objects.forEach = forEach;
 });
 define('skylark-langx-objects/has',[
     "skylark-langx-types",

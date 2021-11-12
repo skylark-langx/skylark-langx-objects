@@ -8,5 +8,5 @@ define([
       return each(obj,fn,true);
     }
 
-	return arrays.forEach = forEach;
+	return objects.forEach = forEach;
 });

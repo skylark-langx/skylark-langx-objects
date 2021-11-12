@@ -5,5 +5,5 @@
  * @link www.skylarkjs.org
  * @license MIT
  */
-define(["./objects","./each"],function(r,a){return arrays.forEach=function(r,c){return r.forEach?arr.forEach(c):a(r,c,!0)}});
+define(["./objects","./each"],function(r,c){return r.forEach=function(r,n){return r.forEach?arr.forEach(n):c(r,n,!0)}});
 //# sourceMappingURL=sourcemaps/for-each.js.map
