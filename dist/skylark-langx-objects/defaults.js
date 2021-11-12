@@ -5,5 +5,5 @@
  * @link www.skylarkjs.org
  * @license MIT
  */
-define(["skylark-langx-objects"],function(r){return r.defaults=(n=allKeys,e=!0,function(r){var t=arguments.length;if(e&&(r=Object(r)),t<2||null==r)return r;for(var a=1;a<t;a++)for(var l=arguments[a],f=n(l),u=f.length,o=0;o<u;o++){var v=f[o];e&&void 0!==r[v]||(r[v]=l[v])}return r});var n,e});
+define(["./objects","./all-keys"],function(r,e){return r.defaults=(n=e,t=!0,function(r){var e=arguments.length;if(t&&(r=Object(r)),e<2||null==r)return r;for(var a=1;a<e;a++)for(var f=arguments[a],l=n(f),u=l.length,o=0;o<u;o++){var v=l[o];t&&void 0!==r[v]||(r[v]=f[v])}return r});var n,t});
 //# sourceMappingURL=sourcemaps/defaults.js.map

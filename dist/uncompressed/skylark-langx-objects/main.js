@@ -7,6 +7,7 @@ define([
 	"./defaults",
 	"./each",
 	"./extend",
+	"./for-each",
 	"./get",
 	"./has",
 	"./includes",
