@@ -1,0 +1,1 @@
+{"version":3,"sources":["assign.js"],"names":["define","types","objects","assign","Object"],"mappings":";;;;;;;AAAAA,QACC,sBACA,aACC,SAASC,EAAMC,GAEhB,OAAOA,EAAQC,OAASC,OAAOD","file":"../assign.js","sourcesContent":["define([\r\n\t\"skylark-langx-types\",\r\n\t\"./objects\"\r\n],function(types,objects) {\r\n\r\n\treturn objects.assign = Object.assign;\r\n});"]}

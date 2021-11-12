@@ -1,30 +1,60 @@
 define([
-	"skylark-langx-types",
-	"./objects"
-],function(types,objects) {
+  "skylark-langx-types",
+  "./objects",
+  "./to-key",
+  "./_cast_path"
+],function(types,objects,toKey,castPath) {
 	var isArray = types.isArray,
 		isFunction = types.isFunction;
 
-    function result(obj, path, fallback) {
-        if (!isArray(path)) {
-            path = path.split(".");//[path]
-        };
-        var length = path.length;
-        if (!length) {
-          return isFunction(fallback) ? fallback.call(obj) : fallback;
-        }
-        for (var i = 0; i < length; i++) {
-          var prop = obj == null ? void 0 : obj[path[i]];
-          if (prop === void 0) {
-            prop = fallback;
-            i = length; // Ensure we don't continue iterating.
-          }
-          obj = isFunction(prop) ? prop.call(obj) : prop;
-        }
+  /**
+   * This method is like `get` except that if the resolved value is a
+   * function it's invoked with the `this` binding of its parent object and
+   * its result is returned.
+   *
+   * @since 0.1.0
+   * @category Object
+   * @param {Object} object The object to query.
+   * @param {Array|string} path The path of the property to resolve.
+   * @param {*} [defaultValue] The value returned for `undefined` resolved values.
+   * @returns {*} Returns the resolved value.
+   * @example
+   *
+   * const object = { 'a': [{ 'b': { 'c1': 3, 'c2': () => 4 } }] }
+   *
+   * result(object, 'a[0].b.c1')
+   * // => 3
+   *
+   * result(object, 'a[0].b.c2')
+   * // => 4
+   *
+   * result(object, 'a[0].b.c3', 'default')
+   * // => 'default'
+   *
+   * result(object, 'a[0].b.c3', () => 'default')
+   * // => 'default'
+   */
+  function result(object, path, defaultValue) {
+    path = castPath(path, object)
 
-        return obj;
+    let index = -1
+    let length = path.length
+
+    // Ensure the loop is entered when path is empty.
+    if (!length) {
+      length = 1
+      object = undefined
     }
+    while (++index < length) {
+      let value = object == null ? undefined : object[toKey(path[index])]
+      if (value === undefined) {
+        index = length
+        value = defaultValue
+      }
+      object = isFunction(value) ? value.call(object) : value
+    }
+    return object
+  }
 
-    return objects.result = result;
-	
+  return objects.result = result;	
 });

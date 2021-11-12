@@ -90,134 +90,245 @@ define('skylark-langx-objects/objects',[
     "skylark-langx-ns",
     "skylark-langx-types"
 ],function(skylark,types){
-    var hasOwnProperty = Object.prototype.hasOwnProperty,
-        slice = Array.prototype.slice,
-        isBoolean = types.isBoolean,
-        isFunction = types.isFunction,
-        isObject = types.isObject,
-        isPlainObject = types.isPlainObject,
-        isArray = types.isArray,
-        isArrayLike = types.isArrayLike,
-        isString = types.isString,
-        toInteger = types.toInteger;
 
-     // An internal function for creating assigner functions.
-    function createAssigner(keysFunc, defaults) {
-        return function(obj) {
-          var length = arguments.length;
-          if (defaults) obj = Object(obj);  
-          if (length < 2 || obj == null) return obj;
-          for (var index = 1; index < length; index++) {
-            var source = arguments[index],
-                keys = keysFunc(source),
-                l = keys.length;
-            for (var i = 0; i < l; i++) {
-              var key = keys[i];
-              if (!defaults || obj[key] === void 0) obj[key] = source[key];
-            }
-          }
-          return obj;
-       };
-    }
+    return skylark.attach("langx.objects",{
+        attach : skylark.attach
+    });
 
+});
+define('skylark-langx-objects/all-keys',[
+    "skylark-langx-types",
+    "./objects"
+],function(types,objects){
 
     // Retrieve all the property names of an object.
     function allKeys(obj) {
-        if (!isObject(obj)) return [];
+        if (!types.isObject(obj)) return [];
         var keys = [];
         for (var key in obj) keys.push(key);
         return keys;
     }
 
-    // Retrieve the names of an object's own properties.
-    // Delegates to **ECMAScript 5**'s native `Object.keys`.
-    function keys(obj) {
-        if (isObject(obj)) return [];
-        var keys = [];
-        for (var key in obj) if (has(obj, key)) keys.push(key);
-        return keys;
-    }
+    return objects.allKeys = allKeys;
 
-    function has(obj, path) {
-        if (!isArray(path)) {
-            return obj != null && hasOwnProperty.call(obj, path);
-        }
-        var length = path.length;
-        for (var i = 0; i < length; i++) {
-            var key = path[i];
-            if (obj == null || !hasOwnProperty.call(obj, key)) {
-                return false;
-            }
-            obj = obj[key];
-        }
-        return !!length;
-    }
+});
+define('skylark-langx-objects/assign',[
+	"skylark-langx-types",
+	"./objects"
+],function(types,objects) {
+
+	return objects.assign = Object.assign;
+});
+define('skylark-langx-objects/to-key',[
+	"skylark-langx-types",
+	"./objects"
+],function(types,objects) {
+
+	const isSymbol = types.isSymbol,
+		  isString = types.isString;
+
+	/** Used as references for various `Number` constants. */
+	const INFINITY = 1 / 0
+
+	/**
+	 * Converts `value` to a string key if it's not a string or symbol.
+	 *
+	 * @private
+	 * @param {*} value The value to inspect.
+	 * @returns {string|symbol} Returns the key.
+	 */
+	function toKey(value) {
+	  if (isString(value) || isSymbol(value)) {
+	    return value
+	  }
+	  const result = `${value}`
+	  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result
+	}
+
+	return objects.toKey = toKey;
+
+});
+define('skylark-langx-objects/is-key',[
+	"skylark-langx-types",
+	"./objects"
+],function(types,objects) {
+
+	const isSymbol = types.isSymbol,
+		  isArray = types.isArray;
+
+	/** Used to match property names within property paths. */
+	const reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/
+	const reIsPlainProp = /^\w*$/
+
+	/**
+	 * Checks if `value` is a property name and not a property path.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @param {Object} [object] The object to query keys on.
+	 * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
+	 */
+	function isKey(value, object) {
+	  if (isArray(value)) {
+	    return false
+	  }
+	  const type = typeof value
+	  if (type === 'number' || type === 'boolean' || value == null || isSymbol(value)) {
+	    return true
+	  }
+	  return reIsPlainProp.test(value) || !reIsDeepProp.test(value) ||
+	    (object != null && value in Object(object))
+	}
+
+	return objects.isKey = isKey;
+});
+define('skylark-langx-objects/_cast_path',[
+	"skylark-langx-types",
+	"./objects",
+	"./is-key"
+],function(types,objects,isKey) {
+	const charCodeOfDot = '.'.charCodeAt(0)
+	const reEscapeChar = /\\(\\)?/g
+	const rePropName = RegExp(
+	  // Match anything that isn't a dot or bracket.
+	  '[^.[\\]]+' + '|' +
+	  // Or match property names within brackets.
+	  '\\[(?:' +
+	    // Match a non-string expression.
+	    '([^"\'][^[]*)' + '|' +
+	    // Or match strings (supports escaping characters).
+	    '(["\'])((?:(?!\\2)[^\\\\]|\\\\.)*?)\\2' +
+	  ')\\]'+ '|' +
+	  // Or match "" as the space between consecutive dots or empty brackets.
+	  '(?=(?:\\.|\\[\\])(?:\\.|\\[\\]|$))'
+	  , 'g')
+
+	/**
+	 * Converts `string` to a property path array.
+	 *
+	 * @private
+	 * @param {string} string The string to convert.
+	 * @returns {Array} Returns the property path array.
+	 */
+	const stringToPath = ((string) => {
+	  const result = []
+	  if (string.charCodeAt(0) === charCodeOfDot) {
+	    result.push('')
+	  }
+	  string.replace(rePropName, (match, expression, quote, subString) => {
+	    let key = match
+	    if (quote) {
+	      key = subString.replace(reEscapeChar, '$1')
+	    }
+	    else if (expression) {
+	      key = expression.trim()
+	    }
+	    result.push(key)
+	  })
+	  return result
+	});
+
+	/**
+	 * Casts `value` to a path array if it's not one.
+	 *
+	 * @private
+	 * @param {*} value The value to inspect.
+	 * @param {Object} [object] The object to query keys on.
+	 * @returns {Array} Returns the cast property path array.
+	 */
+	function castPath(value, object) {
+	  if (types.isArray(value)) {
+	    return value
+	  }
+	  return isKey(value, object) ? [value] : stringToPath(value)
+	}
+
+	return castPath;
+});
+define('skylark-langx-objects/get',[
+	"skylark-langx-types",
+	"./objects",
+	"./to-key",
+	"./_cast_path"
+],function(types,objects,toKey,castPath) {
+
+	/**
+	 * The base implementation of `get` without support for default values.
+	 *
+	 * @private
+	 * @param {Object} object The object to query.
+	 * @param {Array|string} path The path of the property to get.
+	 * @returns {*} Returns the resolved value.
+	 */
+	function baseGet(object, path) {
+	  path = castPath(path, object)
+
+	  let index = 0
+	  const length = path.length
+
+	  while (object != null && index < length) {
+	    object = object[toKey(path[index++])]
+	  }
+	  return (index && index == length) ? object : undefined
+	}
 
 
-    // Returns whether an object has a given set of `key:value` pairs.
-    function isMatch(object, attrs) {
-        var keys = keys(attrs), length = keys.length;
-        if (object == null) return !length;
-        var obj = Object(object);
-        for (var i = 0; i < length; i++) {
-          var key = keys[i];
-          if (attrs[key] !== obj[key] || !(key in obj)) return false;
-        }
-        return true;
-    }    
+	/**
+	 * Gets the value at `path` of `object`. If the resolved value is
+	 * `undefined`, the `defaultValue` is returned in its place.
+	 *
+	 * @since 3.7.0
+	 * @category Object
+	 * @param {Object} object The object to query.
+	 * @param {Array|string} path The path of the property to get.
+	 * @param {*} [defaultValue] The value returned for `undefined` resolved values.
+	 * @returns {*} Returns the resolved value.
+	 * @see has, hasIn, set, unset
+	 * @example
+	 *
+	 * const object = { 'a': [{ 'b': { 'c': 3 } }] }
+	 *
+	 * get(object, 'a[0].b.c')
+	 * // => 3
+	 *
+	 * get(object, ['a', '0', 'b', 'c'])
+	 * // => 3
+	 *
+	 * get(object, 'a.b.c', 'default')
+	 * // => 'default'
+	 */
+	function get(object, path, defaultValue) {
+	  const result = object == null ? undefined : baseGet(object, path)
+	  return result === undefined ? defaultValue : result
+	}
 
+	return objects.get = get;
+});
+define('skylark-langx-objects/base-at',[
+	"./objects",
+	"./get"
+],function(objects,get) {
 
-    function removeItem(items, item) {
-        if (isArray(items)) {
-            var idx = items.indexOf(item);
-            if (idx != -1) {
-                items.splice(idx, 1);
-            }
-        } else if (isPlainObject(items)) {
-            for (var key in items) {
-                if (items[key] == item) {
-                    delete items[key];
-                    break;
-                }
-            }
-        }
+	/**
+	 * The base implementation of `at` without support for individual paths.
+	 *
+	 * @param {Object} object The object to iterate over.
+	 * @param {string[]} paths The property paths to pick.
+	 * @returns {Array} Returns the picked elements.
+	 */
+	function baseAt(object, paths) {
+	  let index = -1
+	  const length = paths.length
+	  const result = new Array(length)
+	  const skip = object == null
 
-        return this;
-    }
+	  while (++index < length) {
+	    result[index] = skip ? undefined : get(object, paths[index])
+	  }
+	  return result
+	}
 
-
-
-    // Retrieve the values of an object's properties.
-    function values(obj) {
-        var keys = allKeys(obj);
-        var length = keys.length;
-        var values = Array(length);
-        for (var i = 0; i < length; i++) {
-            values[i] = obj[keys[i]];
-        }
-        return values;
-    }
-
-
-    return skylark.attach("langx.objects",{
-        allKeys: allKeys,
-
-        attach : skylark.attach,
-
-        defaults : createAssigner(allKeys, true),
-
-        has: has,
-
-        isMatch: isMatch,
-
-        keys: keys,
-
-        removeItem: removeItem,
-
-        values: values
-    });
-
-
+	return objects.baseAt = baseAt;
 });
 define('skylark-langx-objects/clone',[
     "skylark-langx-types",
@@ -251,6 +362,33 @@ define('skylark-langx-objects/clone',[
     }
 
     return objects.clone = clone;
+});
+define('skylark-langx-objects/defaults',[
+    "skylark-langx-objects"
+],function(objects){
+
+
+     // An internal function for creating assigner functions.
+    function createAssigner(keysFunc, defaults) {
+        return function(obj) {
+          var length = arguments.length;
+          if (defaults) obj = Object(obj);  
+          if (length < 2 || obj == null) return obj;
+          for (var index = 1; index < length; index++) {
+            var source = arguments[index],
+                keys = keysFunc(source),
+                l = keys.length;
+            for (var i = 0; i < l; i++) {
+              var key = keys[i];
+              if (!defaults || obj[key] === void 0) obj[key] = source[key];
+            }
+          }
+          return obj;
+       };
+    }
+
+    return objects.defaults = createAssigner(allKeys, true);
+
 });
 define('skylark-langx-objects/each',[
     "./objects"
@@ -391,6 +529,29 @@ define('skylark-langx-objects/extend',[
     }
 
     return objects.extend = extend;
+});
+define('skylark-langx-objects/has',[
+    "skylark-langx-types",
+    "./objects"
+],function(types,objects){
+    var hasOwnProperty = Object.prototype.hasOwnProperty;
+
+    function has(obj, path) {
+        if (!types.isArray(path)) {
+            return obj != null && hasOwnProperty.call(obj, path);
+        }
+        var length = path.length;
+        for (var i = 0; i < length; i++) {
+            var key = path[i];
+            if (obj == null || !hasOwnProperty.call(obj, key)) {
+                return false;
+            }
+            obj = obj[key];
+        }
+        return !!length;
+    }
+
+    return objects.has = has;
 });
 define('skylark-langx-objects/includes',[
     "./objects"
@@ -566,6 +727,43 @@ define('skylark-langx-objects/is-equal',[
     return objects.isEqual = isEqual;
 	
 });
+define('skylark-langx-objects/keys',[
+    "skylark-langx-types",
+    "./objects",
+    "./has"
+],function(types,objects,has){
+
+    // Retrieve the names of an object's own properties.
+    // Delegates to **ECMAScript 5**'s native `Object.keys`.
+    function keys(obj) {
+        if (!types.isObject(obj)) return [];  
+        var keys = [];
+        for (var key in obj) if (has(obj, key)) keys.push(key);
+        return keys;
+    }
+
+    return objects.keys = keys;
+});
+define('skylark-langx-objects/is-match',[
+    "skylark-langx-types",
+    "./objects",
+    "./keys"
+],function(types,objects,keys) {
+
+    // Returns whether an object has a given set of `key:value` pairs.
+    function isMatch(object, attrs) {
+        var keys = keys(attrs), length = keys.length;
+        if (object == null) return !length;
+        var obj = Object(object);
+        for (var i = 0; i < length; i++) {
+          var key = keys[i];
+          if (attrs[key] !== obj[key] || !(key in obj)) return false;
+        }
+        return true;
+    }    
+
+    return objects.isMatch = isMatch;
+});
 define('skylark-langx-objects/omit',[
     "./objects"
 ],function(objects) {
@@ -609,35 +807,89 @@ define('skylark-langx-objects/pick',[
     
     return objects.pick = pick;
 });
+define('skylark-langx-objects/remove-items',[
+    "skylark-langx-types",
+    "./objects"
+],function(types,objects){
+    function removeItem(items, item) {
+        if (types.isArray(items)) {
+            var idx = items.indexOf(item);
+            if (idx != -1) {
+                items.splice(idx, 1);
+            }
+        } else if (types.isPlainObject(items)) {
+            for (var key in items) {
+                if (items[key] == item) {
+                    delete items[key];
+                    break;
+                }
+            }
+        }
+
+        return this;
+    }
+
+    return objects.removeItem = removeItem;
+});
 define('skylark-langx-objects/result',[
-	"skylark-langx-types",
-	"./objects"
-],function(types,objects) {
+  "skylark-langx-types",
+  "./objects",
+  "./to-key",
+  "./_cast_path"
+],function(types,objects,toKey,castPath) {
 	var isArray = types.isArray,
 		isFunction = types.isFunction;
 
-    function result(obj, path, fallback) {
-        if (!isArray(path)) {
-            path = path.split(".");//[path]
-        };
-        var length = path.length;
-        if (!length) {
-          return isFunction(fallback) ? fallback.call(obj) : fallback;
-        }
-        for (var i = 0; i < length; i++) {
-          var prop = obj == null ? void 0 : obj[path[i]];
-          if (prop === void 0) {
-            prop = fallback;
-            i = length; // Ensure we don't continue iterating.
-          }
-          obj = isFunction(prop) ? prop.call(obj) : prop;
-        }
+  /**
+   * This method is like `get` except that if the resolved value is a
+   * function it's invoked with the `this` binding of its parent object and
+   * its result is returned.
+   *
+   * @since 0.1.0
+   * @category Object
+   * @param {Object} object The object to query.
+   * @param {Array|string} path The path of the property to resolve.
+   * @param {*} [defaultValue] The value returned for `undefined` resolved values.
+   * @returns {*} Returns the resolved value.
+   * @example
+   *
+   * const object = { 'a': [{ 'b': { 'c1': 3, 'c2': () => 4 } }] }
+   *
+   * result(object, 'a[0].b.c1')
+   * // => 3
+   *
+   * result(object, 'a[0].b.c2')
+   * // => 4
+   *
+   * result(object, 'a[0].b.c3', 'default')
+   * // => 'default'
+   *
+   * result(object, 'a[0].b.c3', () => 'default')
+   * // => 'default'
+   */
+  function result(object, path, defaultValue) {
+    path = castPath(path, object)
 
-        return obj;
+    let index = -1
+    let length = path.length
+
+    // Ensure the loop is entered when path is empty.
+    if (!length) {
+      length = 1
+      object = undefined
     }
+    while (++index < length) {
+      let value = object == null ? undefined : object[toKey(path[index])]
+      if (value === undefined) {
+        index = length
+        value = defaultValue
+      }
+      object = isFunction(value) ? value.call(object) : value
+    }
+    return object
+  }
 
-    return objects.result = result;
-	
+  return objects.result = result;	
 });
 define('skylark-langx-objects/safe-mixin',[
 	"./objects",
@@ -671,6 +923,119 @@ define('skylark-langx-objects/scall',[
 
     return objects.scall = scall;
 });
+define('skylark-langx-objects/is-index',[
+	"skylark-langx-types",
+	"./objects"
+],function(types,objects) {
+	/** Used as references for various `Number` constants. */
+	const MAX_SAFE_INTEGER = 9007199254740991
+
+	/** Used to detect unsigned integer values. */
+	const reIsUint = /^(?:0|[1-9]\d*)$/
+
+	/**
+	 * Checks if `value` is a valid array-like index.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @param {number} [length=MAX_SAFE_INTEGER] The upper bounds of a valid index.
+	 * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
+	 */
+	function isIndex(value, length) {
+	  const type = typeof value
+	  length = length == null ? MAX_SAFE_INTEGER : length
+
+	  return !!length &&
+	    (type === 'number' ||
+	      (type !== 'symbol' && reIsUint.test(value))) &&
+	        (value > -1 && value % 1 == 0 && value < length)
+	}
+
+	return objects.isIndex = isIndex;
+});
+define('skylark-langx-objects/set',[
+	"skylark-langx-types",
+	"./objects",
+	"./_cast_path",
+	"./is-index",
+	"./to-key"
+],function(types,objects,castPath,isIndex,toKey) {
+	/**
+	 * The base implementation of `set`.
+	 *
+	 * @private
+	 * @param {Object} object The object to modify.
+	 * @param {Array|string} path The path of the property to set.
+	 * @param {*} value The value to set.
+	 * @param {Function} [customizer] The function to customize path creation.
+	 * @returns {Object} Returns `object`.
+	 */
+	function baseSet(object, path, value, customizer) {
+	  if (!types.isObject(object)) {
+	    return object
+	  }
+	  path = castPath(path, object)
+
+	  const length = path.length
+	  const lastIndex = length - 1
+
+	  let index = -1
+	  let nested = object
+
+	  while (nested != null && ++index < length) {
+	    const key = toKey(path[index])
+	    let newValue = value
+
+	    if (index != lastIndex) {
+	      const objValue = nested[key]
+	      newValue = customizer ? customizer(objValue, key, nested) : undefined
+	      if (newValue === undefined) {
+	        newValue = types.isObject(objValue)
+	          ? objValue
+	          : (isIndex(path[index + 1]) ? [] : {})
+	      }
+	    }
+	    nested[key] = newValue; //  assignValues() lwf
+	    nested = nested[key];
+	  }
+	  return object
+	}
+
+	/**
+	 * Sets the value at `path` of `object`. If a portion of `path` doesn't exist,
+	 * it's created. Arrays are created for missing index properties while objects
+	 * are created for all other missing properties. Use `setWith` to customize
+	 * `path` creation.
+	 *
+	 * **Note:** This method mutates `object`.
+	 *
+	 * @since 3.7.0
+	 * @category Object
+	 * @param {Object} object The object to modify.
+	 * @param {Array|string} path The path of the property to set.
+	 * @param {*} value The value to set.
+	 * @returns {Object} Returns `object`.
+	 * @see has, hasIn, get, unset
+	 * @example
+	 *
+	 * const object = { 'a': [{ 'b': { 'c': 3 } }] }
+	 *
+	 * set(object, 'a[0].b.c', 4)
+	 * console.log(object.a[0].b.c)
+	 * // => 4
+	 *
+	 * set(object, ['x', '0', 'y', 'z'], 5)
+	 * console.log(object.x[0].y.z)
+	 * // => 5
+	 */
+	function set(object, path, value) {
+	  return object == null ? object : baseSet(object, path, value)
+	}
+
+
+	return objects.set = set;
+
+});
  define('skylark-langx-objects/shadow',[
 	"./objects"
 ],function(objects) {
@@ -687,20 +1052,90 @@ define('skylark-langx-objects/scall',[
 
     return objects.shadow = shadow;
 });
+define('skylark-langx-objects/unset',[
+	"skylark-langx-types",
+	"./objects",
+	"./set"
+],function(types,objects,set) {
+
+	/**
+	 * Removes the property at `path` of `object`.
+	 *
+	 * **Note:** This method mutates `object`.
+	 *
+	 * @since 4.0.0
+	 * @category Object
+	 * @param {Object} object The object to modify.
+	 * @param {Array|string} path The path of the property to unset.
+	 * @returns {boolean} Returns `true` if the property is deleted, else `false`.
+	 * @see get, has, set
+	 * @example
+	 *
+	 * const object = { 'a': [{ 'b': { 'c': 7 } }] }
+	 * unset(object, 'a[0].b.c')
+	 * // => true
+	 *
+	 * console.log(object)
+	 * // => { 'a': [{ 'b': {} }] }
+	 *
+	 * unset(object, ['a', '0', 'b', 'c'])
+	 * // => true
+	 *
+	 * console.log(object)
+	 * // => { 'a': [{ 'b': {} }] }
+	 */
+	function unset(object, path) {
+	  return object == null ? true : set(object, path,undefined)
+	}
+
+	return objects.unset = unset;
+});
+define('skylark-langx-objects/values',[
+    "skylark-langx-types",
+    "./objects",
+    "./all-keys"
+],function(types,objects,allKeys){
+    // Retrieve the values of an object's properties.
+    function values(obj) {
+        var keys = allKeys(obj);
+        var length = keys.length;
+        var values = Array(length);
+        for (var i = 0; i < length; i++) {
+            values[i] = obj[keys[i]];
+        }
+        return values;
+    }
+
+    return objects.values = values;
+});
 define('skylark-langx-objects/main',[
 	"./objects",
+	"./all-keys",
+	"./assign",
+	"./base-at",
 	"./clone",
+	"./defaults",
 	"./each",
 	"./extend",
+	"./get",
+	"./has",
 	"./includes",
 	"./is-equal",
+	"./is-key",
+	"./is-match",
+	"./keys",
 	"./mixin",
 	"./omit",
 	"./pick",
+	"./remove-items",
 	"./result",
 	"./safe-mixin",
 	"./scall",
-	"./shadow"
+	"./set",
+	"./shadow",
+	"./to-key",
+	"./unset",
+	"./values"
 ],function(objects){
 	return objects;
 });

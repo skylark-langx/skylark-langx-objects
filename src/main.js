@@ -1,17 +1,31 @@
 define([
 	"./objects",
+	"./all-keys",
+	"./assign",
+	"./base-at",
 	"./clone",
+	"./defaults",
 	"./each",
 	"./extend",
+	"./get",
+	"./has",
 	"./includes",
 	"./is-equal",
+	"./is-key",
+	"./is-match",
+	"./keys",
 	"./mixin",
 	"./omit",
 	"./pick",
+	"./remove-items",
 	"./result",
 	"./safe-mixin",
 	"./scall",
-	"./shadow"
+	"./set",
+	"./shadow",
+	"./to-key",
+	"./unset",
+	"./values"
 ],function(objects){
 	return objects;
 });
