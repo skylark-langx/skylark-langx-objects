@@ -781,8 +781,9 @@ define('skylark-langx-objects/is-match',[
     return objects.isMatch = isMatch;
 });
 define('skylark-langx-objects/omit',[
-    "./objects"
-],function(objects) {
+    "./objects",
+    "./mixin"
+],function(objects,mixin) {
 
    // Return a copy of the object without the blacklisted properties.
     function omit(obj, prop1,prop2) {

@@ -1,6 +1,7 @@
 define([
-    "./objects"
-],function(objects) {
+    "./objects",
+    "./mixin"
+],function(objects,mixin) {
 
    // Return a copy of the object without the blacklisted properties.
     function omit(obj, prop1,prop2) {
