@@ -9,7 +9,7 @@
   "homepage": "www.skylarkjs.org",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/skylarklangx/skylark-langx-objects.git"
+    "url": "https://github.com/skylarklangx/skylark-langx-objects.git"
   },
   "keywords": [
     "skylark",
@@ -25,8 +25,8 @@
     "./*": "./dist/uncompressed/skylark-langx-objects/*.js"
   },
   "dependencies": {
-    "skylark-langx-ns": "git+https://github.com/skylark-langx/skylark-langx-ns.git",
-    "skylark-langx-types": "git+https://github.com/skylark-langx/skylark-langx-types.git"
+    "skylark-langx-ns": "https://github.com/skylark-langx/skylark-langx-ns.git",
+    "skylark-langx-types": "https://github.com/skylark-langx/skylark-langx-types.git"
   },
   "engines": {
     "node": ">=0.8.0"
